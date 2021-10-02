@@ -22,7 +22,7 @@ If you have any problems using VerifAI, please submit an issue to the GitHub rep
 
 * _docs_: sources for the [documentation](https://verifai.readthedocs.io/);
 
-* _examples_: examples and additional documentation for particular simulators, including CARLA, Webots, X-Plane, and OpenAI Gym;
+* _experiments_: the orchestrating scripts for running the behavior prediction testing pipeline
 
 * _src/verifai_: the source for the `verifai` package proper;
 
