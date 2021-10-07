@@ -23,11 +23,11 @@
 * In the command line, enter the repository and switch to the branch "kesav-v/multi-objective"
 * Run `poetry install`
 
-### Settings Configuration
+### Configuration Settings
 
 This file lets you configure which Scenic programs to simulate, how many times to simulate each program, how many steps to run each simulation for, and where to output the generated data.
 
-A sample scenario configuration file, which must be saved in the JSON format, is shown below. Feel free to change the list of scripts to reference any Scenic programs on your machine.
+A sample configuration file, which must be saved in the JSON format, is shown below. Feel free to change the list of scripts to reference any Scenic programs on your machine.
 
 ```
 {
@@ -51,3 +51,4 @@ A sample scenario configuration file, which must be saved in the JSON format, is
 ## Running the Testing Pipeline
 
 * Run `python main.py`
+* This will save the error table CSVs to the output directory specified in the configuration file.
