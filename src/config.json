@@ -3,12 +3,12 @@
       "scenarios/ex.scenic"
    ],
    "behavior_prediction_model": "/path/to/model",
-   "timepoint": 50,  // time step to begin prediction
+   "timepoint": "50",  // time step to begin prediction
    "sampler_type": "mab",  // VerifAI sampler
-   "parallel_workers": 1,  // number of parallel workers
-   "simulations_per_scenario": 3,  // number of iterations to execute each Scenic program
+   "parallel_workers": "1",  // number of parallel workers
+   "simulations_per_scenario": "3",  // number of iterations to execute each Scenic program
    "output_dir": "/path/to/output/dir",
-   "time_per_simulation": 20,  // max time steps per simulation
+   "time_per_simulation": "20",  // max time steps per simulation
    "input": [  // input data type(s)
    	"trajectory"
    ],

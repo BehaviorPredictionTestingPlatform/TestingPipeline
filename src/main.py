@@ -19,12 +19,12 @@ with open(config_path, 'r') as file:
 
 # Assign platform parameters
 model_path = config['behavior_prediction_model']
-timepoint = config['timepoint']
+timepoint = int(config['timepoint'])
 sampler_type = config['sampler_type']
-num_workers = config['parallel_workers']
-num_iters = config['simulations_per_scenario']
+num_workers = int(config['parallel_workers'])
+num_iters = int(config['simulations_per_scenario'])
 output_dir = config['output_dir']
-max_steps = config['time_per_simulation']
+max_steps = int(config['time_per_simulation'])
 inputs = config['input']
 headless = config['headless_mode']
 
