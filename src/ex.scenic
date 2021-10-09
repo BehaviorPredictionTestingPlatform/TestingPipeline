@@ -24,6 +24,18 @@ CRASH_DIST = 5
 TERM_DIST = 70
 
 #################################
+# AGENT BEHAVIORS               #
+#################################
+
+behavior EgoBehavior(trajectory):
+    try:
+        do FollowTrajectoryBehavior(target_speed=globalParameters.EGO_SPEED, trajectory=trajectory)
+    interrupt when withinDistanceToAnyObjs(self, globalParameters.SAFETY_DIST):
+        take SetBrakeAction(globalParameters.EGO_BRAKE)
+    interrupt when withinDistanceToAnyObjs(self, CRASH_DIST):
+        terminate
+
+#################################
 # SPATIAL RELATIONS             #
 #################################
 
@@ -31,8 +43,8 @@ intersection = Uniform(*filter(lambda i: i.is4Way, network.intersections))
 
 egoInitLane = Uniform(*intersection.incomingLanes)
 egoManeuver = Uniform(*filter(lambda m: m.type is ManeuverType.STRAIGHT, egoInitLane.maneuvers))
+egoTrajectory = [egoInitLane, egoManeuver.connectingLane, egoManeuver.endLane]
 egoSpawnPt = OrientedPoint in egoInitLane.centerline
-egoEndPt = OrientedPoint in egoManeuver.endLane.centerline
 
 advInitLane = Uniform(*filter(lambda m:
         m.type is ManeuverType.STRAIGHT,
@@ -46,8 +58,9 @@ advSpawnPt = OrientedPoint in advInitLane.centerline
 # SCENARIO SPECIFICATION        #
 #################################
 
-ego = ApolloCar at egoSpawnPt,
-    with behavior DriveTo(egoEndPt)
+ego = Car at egoSpawnPt,
+    with blueprint MODEL,
+    with behavior EgoBehavior(egoTrajectory)
 
 adversary = Car at advSpawnPt,
     with blueprint MODEL,
