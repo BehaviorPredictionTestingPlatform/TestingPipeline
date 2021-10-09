@@ -1,6 +1,6 @@
 {
    "scenic_programs": [
-      "scenarios/ex.scenic"
+      "ex.scenic"
    ],
    "behavior_prediction_model": "/path/to/model",
    "timepoint": "50",
