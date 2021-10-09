@@ -12,10 +12,6 @@ from verifai.scenic_server import ScenicServer
 from verifai.falsifier import generic_falsifier, generic_parallel_falsifier
 from verifai.monitor import multi_objective_monitor
 
-def run_experiment(scenic_path, model_path, thresholds=None, timepoint=20,
-                    sampler_type=None, num_workers=1, num_iters=10, 
-                    headless=False, output_dir='outputs', debug=False)
-
 # Load user configurations
 config_path = './config.json'
 with open(config_path, 'r') as file:
