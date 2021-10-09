@@ -2,7 +2,7 @@
    "scenic_programs": [
       "ex.scenic"
    ],
-   "behavior_prediction_model": "../LaneGCN",
+   "behavior_prediction_model": "../../LaneGCN",
    "timepoint": "50",
    "sampler_type": "mab",
    "parallel_workers": "1",
