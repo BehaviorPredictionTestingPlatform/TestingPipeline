@@ -7,7 +7,7 @@
    "sampler_type": "mab",
    "parallel_workers": "1",
    "simulations_per_scenario": "3",
-   "output_dir": "../outputs",
+   "output_dir": "../output",
    "time_per_simulation": "20",
    "input": [
    	"trajectory"
