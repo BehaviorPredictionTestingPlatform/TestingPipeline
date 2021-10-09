@@ -56,7 +56,7 @@ class ADE_FDE(multi_objective_monitor):
             currDir = os.path.abspath(os.getcwd())
             os.chdir(model_path)
             subprocess.run(['python', 'preprocess_data.py', '-n', '1', '-w', f'{worker_num}'])
-            subprocess.run(['python', 'test.py', '-m', 'lanegcn', f'--weight={model_path}/36.000.ckpt', '--split=test', '--map_path=/maps/CARLA/Town05.xodr', f'--worker_num={worker_num}'])
+            subprocess.run(['python', 'test.py', '-m', 'lanegcn', f'--weight=36.000.ckpt', '--split=test', '--map_path=/maps/CARLA/Town05.xodr', f'--worker_num={worker_num}'])
             os.chdir(currDir)
 
             ADEs, FDEs = [], []
