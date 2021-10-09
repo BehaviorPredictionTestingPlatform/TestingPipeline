@@ -37,7 +37,7 @@ class ADE_FDE(multi_objective_monitor):
                 plt.plot([gt[-1][0] for gt in gt_traj], [gt[-1][1] for gt in gt_traj], color='yellow')
 
             # Process historical trajectory CSV file
-            with open(f'{model_path}/dataset/test_obs/data_{worker_num}/0.csv', 'w', newline='') as csvfile:
+            with open(f'{model_path}/dataset/test_obs/data_{worker_num}/0.csv', 'w+', newline='') as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(['TIMESTAMP', 'TRACK_ID', 'OBJECT_TYPE', 'X', 'Y', 'CITY_NAME'])
                 track_id = '00000000-0000-0000-0000-000000000000'
