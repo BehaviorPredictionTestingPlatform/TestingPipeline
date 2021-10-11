@@ -21,7 +21,7 @@
     * Open your “~/.bashrc” file in an editor. Create a new line with the following export statement: “export PYTHONPATH=/path/to/egg/file”
     * Save and exit “~/.bashrc” and restart the terminal for the changes to take effect. To confirm that the package is on the PYTHONPATH, try the command “echo $PYTHONPATH"
 
-## Creating a Virtual Environment
+### Creating a Virtual Environment
 
 Following is an example of creating a virtual environment named 'bp_venv' from scratch using anaconda. You can use pip as well:
 
@@ -73,13 +73,13 @@ A sample configuration file, which must be saved in the JSON format, is shown be
 }
 ```
 
-## Reproducing Experiment Results with LaneGCN
+### Reproducing Experiment Results with LaneGCN
 
 To reproduce the results of the paper, we have provided a forked repository of the LaneGCN model with the necessary support for compatibility with this platform.
 
 * In a new terminal window, clone [this repository](https://github.com/BehaviorPredictionTestingPlatform/LaneGCN).
 
-## Running the Testing Pipeline
+### Running the Testing Pipeline
 
 * Run `python main.py`
 * This will save the error table CSVs to the output directory specified in the configuration file.
