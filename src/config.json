@@ -8,9 +8,8 @@
    "parallel_workers": "1",
    "simulations_per_scenario": "3",
    "output_dir": "../output",
-   "time_per_simulation": "20",
+   "time_per_simulation": "200",
    "input": [
    	"trajectory"
-   ],
-   "headless_mode": false
+   ]
 }

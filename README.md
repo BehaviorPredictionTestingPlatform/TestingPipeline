@@ -16,6 +16,7 @@
     * Download “AdditionalMaps_0.9.10.1.tar.gz”. Do not unzip this file. Rather, navigate to “~/carla” (the directory you unzipped CARLA into in the previous step), and place “AdditionalMaps_0.9.10.1.tar.gz” in the “Import” subdirectory.
 * In the command line, cd into “~/carla” and run `./ImportAssets.sh`
 * Try running `./CarlaUE4.sh` from the “~/carla” directory. You should see a window pop up containing a 3D scene.
+* To instantiate multiple simulators simultaneously, run `./CarlaUE4.sh --carla-rpc-port={port_number}` in a different terminal window.
 * The CARLA release contains a Python package for the API. To use this, you need to add the package to your terminal’s PYTHONPATH variable as follows:
     * First, copy down the filepath of the Python package. The package should be located in “~/carla/PythonAPI/carla/dist”. Its name should be something like “carla-0.9.10-py3.7-linux-x86_64.egg”
     * Open your “~/.bashrc” file in an editor. Create a new line with the following export statement: “export PYTHONPATH=/path/to/egg/file”
@@ -65,11 +66,10 @@ A sample configuration file, which must be saved in the JSON format, is shown be
    "parallel_workers": 1,  // number of parallel workers
    "simulations_per_scenario": 3,  // number of iterations to execute each Scenic program
    "output_dir": "/path/to/output/dir",
-   "time_per_simulation": 20,  // max time steps per simulation
+   "time_per_simulation": 200,  // max time steps per simulation
    "input": [  // input data type(s)
       "trajectory"
-   ],
-   "headless_mode": false  // render HUD in CARLA
+   ]
 }
 ```
 
