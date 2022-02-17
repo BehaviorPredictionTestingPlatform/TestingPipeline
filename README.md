@@ -1,5 +1,9 @@
 # Behavior Prediction Testing Platform
 
+Please either post an issue or contact Francis Indaheng (findaheng@berkeley.edu) for any bugs or questions.
+
+See our NeurIPS 2021 Workshop on Machine Learning for Autonomous Driving [paper](https://ml4ad.github.io/files/papers2021/A%20Scenario-Based%20Platform%20for%20Testing%20Autonomous%20Vehicle%20Behavior%20Prediction%20Models%20in%20Simulation.pdf) to learn more!
+
 ## Setup
 
 ### System Requirements
