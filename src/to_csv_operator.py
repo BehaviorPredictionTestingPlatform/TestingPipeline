@@ -8,14 +8,7 @@ Authors:
 """
 
 import csv
-
 import erdos
-from erdos import Message, ReadStream, Timestamp
-
-from pylot.prediction.messages import PredictionMessage
-from pylot.prediction.obstacle_prediction import ObstaclePrediction
-from pylot.perception.tracking import ObstacleTrajectory
-from pylot.utils import Transform
 
 
 class ToCsvOperator(erdos.Operator):
@@ -28,13 +21,13 @@ class ToCsvOperator(erdos.Operator):
         csv_file_dir (:py:class:str): Absolute dir path to write CSV file.
         worker_num (:py:class:int): Parallel worker identifier.
     """
-    def __init__(self, prediction_stream: ReadStream, csv_file_dir: str, worker_num: int):
+    def __init__(self, prediction_stream: erdos.ReadStream, csv_file_dir: str, worker_num: int):
         self.prediction_stream = prediction_stream
         self.csv_file = open(f'{csv_file_dir}/pred_{worker_num}_0.csv', 'w', newline='')
         self.writer = csv.writer(self.csv_file)
 
     @staticmethod
-    def connect(prediction_stream: ReadStream):
+    def connect(prediction_stream: erdos.ReadStream):
         return []
 
     def destroy(self):
@@ -43,7 +36,6 @@ class ToCsvOperator(erdos.Operator):
     def run(self):
         self.writer.writerow(['timestamp', 'agent_id', 'x', 'y', 'yaw'])
         while (msg := self.prediction_stream.try_read() is not None):
-            assert isinstance(msg, PredictionMessage)
             timestamp = msg.timestamp.coordinates[0]
             for pred in msg.predictions:
                 agent_id = pred.obstacle_trajectory.obstacle.id

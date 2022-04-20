@@ -8,9 +8,7 @@ Authors:
 """
 
 import csv
-
 import erdos
-from erdos import Message, Timestamp, WriteStream
 
 from pylot.perception.detection import Obstacle
 from pylot.perception.messages import ObstacleTrajectoriesMessage
@@ -63,7 +61,7 @@ class FromCsvOperator(erdos.Operator):
 
         # Stream each agent's trajectory
         for _, data in obs_trajs.items():
-            timestamp = Timestamp(coordinates=data['coordinates'])
+            timestamp = erdos.Timestamp(coordinates=data['coordinates'])
             obs_traj = ObstacleTrajectory(data['obstacle'], data['trajectory'])
             msg = ObstacleTrajectoriesMessage(timestamp, obs_traj)
             self.tracking_stream.send(msg)
