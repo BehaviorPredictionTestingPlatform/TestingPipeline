@@ -40,10 +40,11 @@ class FromCsvOperator(erdos.Operator):
         return [self.traj_stream]
 
     def run(self):
+        assert self.traj_keys == ['timestamp', 'agent_id', 'x', 'y', 'yaw']
+        
         # Dictionary for mapping agents to trajectory data
         obs_trajs = {}
 
-        # NOTE: traj -> ['timestamp', 'agent_id', 'x', 'y', 'yaw']
         for traj in traj_data:
             agent_id = int(traj[1])
 
