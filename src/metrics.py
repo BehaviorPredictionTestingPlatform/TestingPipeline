@@ -8,66 +8,71 @@ import subprocess
 
 from verifai.monitor import multi_objective_monitor
 
+
 class ADE_FDE(multi_objective_monitor):
-    def __init__(self, model_path, thresholds=(0.1, 1), timepoint=20, parallel=False, debug=False):
-        priority_graph = None
-        self.model_path = model_path
+    """Specification monitor that uses the Average Displacement Error
+       and Final Displacement Error metrics.
+
+    Args:
+        model_path (py:class:str): Absolute path to prediction model.
+        threshADE (py:class:float): Failure threshold for ADE metric.
+        threshFDE (py:class:float): Failure threshold for FDE metric.
+        timepoint (py:class:int): Timestep at which to start prediction.
+        past_steps (py:class:int): Number of timesteps to supply model.
+        future_steps (py:class:int): Number of timesteps to receive from model.
+        num_preds (py:class:int): Number of predictions to receive from model.
+        parallel (py:class:bool): Indicates if using parallelized VerifAI.
+        debug (py:class:bool): Indicates if debugging mode is on.
+    """
+
+    def __init__(self, model_path, threshADE=0.1, threshFDE=1,
+                 timepoint=20, past_steps=20, future_steps=15,
+                 num_preds=1, parallel=False, debug=False):
+        assert timepoint >= past_steps, 'Timepoint must be at least the number of past steps!'
         self.num_objectives = 2
-        self.parallel = parallel
-        self.debug = debug
-        self.thresholds = thresholds
-        self.timepoint = timepoint
-        assert len(thresholds) == self.num_objectives, f'Must include {self.num_objectives} threshold values!'
-        assert timepoint >= 20, 'Must allow at least 20 timesteps of past trajectories!'
 
         def specification(simulation):
-            worker_num = simulation.worker_num if self.parallel else 0
+            worker_num = simulation.worker_num if parallel else 0
             traj = simulation.trajectory
             num_agents = len(traj[0])
-            hist_traj = traj[timepoint-20:timepoint]
-            gt_traj = traj[timepoint:timepoint+15]
+            hist_traj = traj[timepoint-past_steps:timepoint]
+            gt_traj = traj[timepoint:timepoint+future_steps]
             gts = np.asarray([(tj[-1][0], tj[-1][1]) for tj in gt_traj])
             gt_len = len(gts)
-            threshADE, threshFDE = self.thresholds
 
-            if self.debug:
+            if debug:
                 print(f'ADE Threshold: {threshADE}, FDE Threshold: {threshFDE}')
                 plt.plot([gt[-1][0] for gt in traj], [gt[-1][1] for gt in traj], color='black')
                 plt.plot([gt[-1][0] for gt in hist_traj], [gt[-1][1] for gt in hist_traj], color='blue')
                 plt.plot([gt[-1][0] for gt in gt_traj], [gt[-1][1] for gt in gt_traj], color='yellow')
 
-            # Process historical trajectory CSV file
-            with open(f'{model_path}/dataset/test_obs/data_{worker_num}/0.csv', 'w+', newline='') as csvfile:
+            # Write historical trajectories to CSV file
+            hist_csv_path = f'{model_path}/dataset/test_obs/data_{worker_num}/0.csv'  # TODO: change this
+            with open(hist_csv_path, 'w', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow(['TIMESTAMP', 'TRACK_ID', 'OBJECT_TYPE', 'X', 'Y', 'CITY_NAME'])
-                track_id = '00000000-0000-0000-0000-000000000000'
-                for timestamp in range(timepoint-20, timepoint):
-                    for obj_type, agent_pos in enumerate(traj[timestamp]):
-                        if obj_type == 0:
-                            obj_type = 'AV'
-                        elif obj_type == num_agents - 1:
-                            obj_type = 'AGENT'
-                        else:
-                            obj_type = 'OTHER'
-                        writer.writerow([timestamp, track_id, obj_type, agent_pos[0], agent_pos[1], 'N/A'])
+                writer.writerow(['timestamp', 'agent_id', 'x', 'y', 'yaw'])
+                for timestamp in range(timepoint-past_steps, timepoint):
+                    for agent_id, transform in enumerate(traj[timestamp]):
+                        writer.writerow([timestamp, agent_id, transform[0], transform[1], transform[2]])
             csvfile.close()
 
             # Run behavior prediction model
-            currDir = os.path.abspath(os.getcwd())
+            curr_dir = os.path.abspath(os.getcwd())
             os.chdir(model_path)
             subprocess.run(['python', 'preprocess_data.py', '-n', '1', '-w', f'{worker_num}'])
             subprocess.run(['python', 'test.py', '-m', 'lanegcn', f'--weight=36.000.ckpt', '--split=test', '--map_path=/maps/CARLA/Town05.xodr', f'--worker_num={worker_num}'])
-            os.chdir(currDir)
+            os.chdir(curr_dir)
 
             ADEs, FDEs = [], []
-            for i in range(6):
+            for i in range(num_preds):
+
                 # Extract predicted trajectories from CSV file
                 preds = np.genfromtxt(f'{model_path}/results/lanegcn/predictions_{worker_num}_{i}.csv', delimiter=',', skip_header=1)
                 pred_len = preds.shape[0]
                 if gt_len < pred_len:
                     preds = preds[:gt_len]
 
-                # Compute metrics
+                # Compute ADE and FDE metrics
                 ADE = float(
                     sum(
                         math.sqrt(
@@ -85,7 +90,7 @@ class ADE_FDE(multi_objective_monitor):
                 ADEs.append(ADE)
                 FDEs.append(FDE)
 
-                if self.debug:
+                if debug:
                     print(f'ADE: {ADE}, FDE: {FDE}')
                     p = pd.read_csv(f'{model_path}/results/lanegcn/predictions_{worker_num}_{i}.csv')
                     plt.plot(p['X'], p['Y'], color='green')
@@ -94,8 +99,9 @@ class ADE_FDE(multi_objective_monitor):
             print(f'minADE: {minADE}, minFDE: {minFDE}')
             rho = (threshADE - minADE, threshFDE - minFDE)
 
-            if self.debug:
+            if debug:
                 plt.show()
+
             return rho
 
-        super().__init__(specification, priority_graph)
+        super().__init__(specification, priority_graph=None, linearize=False)
