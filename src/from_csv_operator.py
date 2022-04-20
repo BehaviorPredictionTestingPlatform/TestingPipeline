@@ -1,15 +1,13 @@
 """
-Implements an operator for interfacing [1] to the prediction component of Pylot.
+Implements an operator for interfacing [1] to the Pylot LinearPredictorOperator.
 
 [1] https://arxiv.org/abs/2110.14870
 
 Authors:
   * Francis Indaheng (findaheng@berkeley.edu)
-  * Kaleab Belete (kaleab@berkeley.edu)
 """
 
 import csv
-import numpy as np
 
 import erdos
 from erdos import Message, Timestamp, WriteStream
@@ -22,25 +20,26 @@ from pylot.utils import Location, Rotation, Transform
 
 class FromCsvOperator(erdos.Operator):
     """Operator to stream a CSV file of historical trajectories
-       to the LinearPredictorOperator of Pylot.
+       to the Pylot LinearPredictorOperator.
     
     Args:
-        csv_file_path (:py:class:str): Absolute path to CSV file.
+        csv_file_path (:py:class:str): Absolute path to CSV file to read from.
     """
     def __init__(self, csv_file_path: str):
-        self.csv_file_path = csv_file_path
-        with open(csv_file_path, 'r') as file:
-            data = csv.reader(file)
-            self.traj_keys = data[0]
-            self.traj_data = data[1:]
+        self.csv_file = open(csv_file_path, 'r'):
+        self.data = csv.reader(self.csv_file)
         self.tracking_stream = erdos.WriteStream()
 
     @staticmethod
     def connect():
         return [self.tracking_stream]
 
+    def destroy(self):
+        self.csv_file.close()
+
     def run(self):
-        assert self.traj_keys == ['timestamp', 'agent_id', 'x', 'y', 'yaw']
+        traj_keys, traj_data = self.data[0], self.data[1:]
+        assert traj_keys == ['timestamp', 'agent_id', 'x', 'y', 'yaw']
         
         # Dictionary for mapping agents to trajectory data
         obs_trajs = {}

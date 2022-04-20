@@ -4,10 +4,7 @@ import erdos
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-import os
 import pandas as pd
-import subprocess
-
 
 import pylot.prediction.flags
 from pylot.prediction.linear_predictor_operator import LinearPredictorOperator
@@ -20,7 +17,8 @@ class ADE_FDE(multi_objective_monitor):
        and Final Displacement Error metrics.
 
     Args:
-        out_path (py:class:str): Absolute path to write predictions.
+        in_dir (py:class:str): Absolute dir path to write past trajectories.
+        out_dir (py:class:str): Absolute dir path to write predictions.
         threshADE (py:class:float): Failure threshold for ADE metric.
         threshFDE (py:class:float): Failure threshold for FDE metric.
         timepoint (py:class:int): Timestep at which to start prediction.
@@ -31,14 +29,17 @@ class ADE_FDE(multi_objective_monitor):
         debug (py:class:bool): Indicates if debugging mode is on.
     """
 
-    def __init__(self, out_path, threshADE=0.1, threshFDE=1,
+    def __init__(self, in_dir, out_dir, threshADE=0.1, threshFDE=1,
                  timepoint=20, past_steps=20, future_steps=15,
                  num_preds=1, parallel=False, debug=False):
+
         assert timepoint >= past_steps, 'Timepoint must be at least the number of past steps!'
         assert past_steps >= future_steps, 'Must track at least as many steps as we predict!'
-        self.num_objectives = 2
+
         flags.DEFINE_integer('prediction_num_past_steps', past_steps, '')
         flags.DEFINE_integer('prediction_num_future_steps', future_steps, '')
+        
+        self.num_objectives = 2
 
         def specification(simulation):
             worker_num = simulation.worker_num if parallel else 0
@@ -55,32 +56,29 @@ class ADE_FDE(multi_objective_monitor):
                 plt.plot([gt[-1][0] for gt in hist_traj], [gt[-1][1] for gt in hist_traj], color='blue')
                 plt.plot([gt[-1][0] for gt in gt_traj], [gt[-1][1] for gt in gt_traj], color='yellow')
 
-            # Write historical trajectories to CSV file
-            hist_csv_path = f'{model_path}/dataset/test_obs/data_{worker_num}/0.csv'  # TODO: change this
-            with open(hist_csv_path, 'w', newline='') as csvfile:
-                writer = csv.writer(csvfile)
-                writer.writerow(['timestamp', 'agent_id', 'x', 'y', 'yaw'])
-                for timestamp in range(timepoint-past_steps, timepoint):
-                    for agent_id, transform in enumerate(traj[timestamp]):
-                        writer.writerow([timestamp, agent_id, transform[0], transform[1], transform[2]])
-            csvfile.close()
+            # Write past trajectories to CSV file
+            input_csv_path = f'{in_dir}/past_{worker_num}_0.csv'
+            csv_file = open(input_csv_path, 'w', newline='')
+            writer = csv.writer(csv_file)
+            writer.writerow(['timestamp', 'agent_id', 'x', 'y', 'yaw'])
+            for timestamp in range(timepoint-past_steps, timepoint):
+                for agent_id, transform in enumerate(traj[timestamp]):
+                    writer.writerow([timestamp, agent_id, transform[0], transform[1], transform[2]])
+            csv_file.close()
 
             # Run behavior prediction model
-            [tracking_stream] = erdos.connect(FromCsvOperator, erdos.OperatorConfig(), [], hist_csv_path)
+            [tracking_stream] = erdos.connect(FromCsvOperator, erdos.OperatorConfig(), [], input_csv_path)
             [prediction_stream] = erdos.connect(LinearPredictorOperator, erdos.OperatorConfig(), [tracking_stream], flags.FLAGS)
+            erdos.connect(ToCsvOperator, erdos.OperatorConfig(), [prediction_stream], out_dir, worker_num)
+            erdos.run()
 
-
-            curr_dir = os.path.abspath(os.getcwd())
-            os.chdir(model_path)
-            subprocess.run(['python', 'preprocess_data.py', '-n', '1', '-w', f'{worker_num}'])
-            subprocess.run(['python', 'test.py', '-m', 'lanegcn', f'--weight=36.000.ckpt', '--split=test', '--map_path=/maps/CARLA/Town05.xodr', f'--worker_num={worker_num}'])
-            os.chdir(curr_dir)
-
+            # Compute metrics from predicted and ground truth trajectories
             ADEs, FDEs = [], []
             for i in range(num_preds):
 
                 # Extract predicted trajectories from CSV file
-                preds = np.genfromtxt(f'{model_path}/results/lanegcn/predictions_{worker_num}_{i}.csv', delimiter=',', skip_header=1)
+                output_csv_path = f'{out_dir}/pred_{worker_num}_{i}.csv'
+                preds = np.genfromtxt(output_csv_path, delimiter=',', skip_header=1)
                 pred_len = preds.shape[0]
                 if gt_len < pred_len:
                     preds = preds[:gt_len]
