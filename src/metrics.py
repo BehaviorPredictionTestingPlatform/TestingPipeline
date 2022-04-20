@@ -1,10 +1,16 @@
+import absl.flags as flags
 import csv
+import erdos
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
 import subprocess
+
+
+import pylot.prediction.flags
+from pylot.prediction.linear_predictor_operator import LinearPredictorOperator
 
 from verifai.monitor import multi_objective_monitor
 
@@ -14,7 +20,7 @@ class ADE_FDE(multi_objective_monitor):
        and Final Displacement Error metrics.
 
     Args:
-        model_path (py:class:str): Absolute path to prediction model.
+        out_path (py:class:str): Absolute path to write predictions.
         threshADE (py:class:float): Failure threshold for ADE metric.
         threshFDE (py:class:float): Failure threshold for FDE metric.
         timepoint (py:class:int): Timestep at which to start prediction.
@@ -25,11 +31,14 @@ class ADE_FDE(multi_objective_monitor):
         debug (py:class:bool): Indicates if debugging mode is on.
     """
 
-    def __init__(self, model_path, threshADE=0.1, threshFDE=1,
+    def __init__(self, out_path, threshADE=0.1, threshFDE=1,
                  timepoint=20, past_steps=20, future_steps=15,
                  num_preds=1, parallel=False, debug=False):
         assert timepoint >= past_steps, 'Timepoint must be at least the number of past steps!'
+        assert past_steps >= future_steps, 'Must track at least as many steps as we predict!'
         self.num_objectives = 2
+        flags.DEFINE_integer('prediction_num_past_steps', past_steps, '')
+        flags.DEFINE_integer('prediction_num_future_steps', future_steps, '')
 
         def specification(simulation):
             worker_num = simulation.worker_num if parallel else 0
@@ -57,6 +66,10 @@ class ADE_FDE(multi_objective_monitor):
             csvfile.close()
 
             # Run behavior prediction model
+            [tracking_stream] = erdos.connect(FromCsvOperator, erdos.OperatorConfig(), [], hist_csv_path)
+            [prediction_stream] = erdos.connect(LinearPredictorOperator, erdos.OperatorConfig(), [tracking_stream], flags.FLAGS)
+
+
             curr_dir = os.path.abspath(os.getcwd())
             os.chdir(model_path)
             subprocess.run(['python', 'preprocess_data.py', '-n', '1', '-w', f'{worker_num}'])

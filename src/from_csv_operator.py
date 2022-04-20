@@ -26,22 +26,18 @@ class FromCsvOperator(erdos.Operator):
     
     Args:
         csv_file_path (:py:class:str): Absolute path to CSV file.
-        past_steps (:py:class:int): Number of past steps of trajectories to incorporate.
-        future_steps (:py:class:int): Number of future steps of trajectories to predict.
     """
-    def __init__(self, csv_file_path: str, past_steps: int, future_steps: int):
+    def __init__(self, csv_file_path: str):
         self.csv_file_path = csv_file_path
         with open(csv_file_path, 'r') as file:
             data = csv.reader(file)
             self.traj_keys = data[0]
             self.traj_data = data[1:]
-        self.past_steps = past_steps
-        self.future_steps = future_steps
-        self.traj_stream = erdos.WriteStream()
+        self.tracking_stream = erdos.WriteStream()
 
     @staticmethod
     def connect():
-        return [self.traj_stream]
+        return [self.tracking_stream]
 
     def run(self):
         assert self.traj_keys == ['timestamp', 'agent_id', 'x', 'y', 'yaw']
@@ -71,4 +67,4 @@ class FromCsvOperator(erdos.Operator):
             timestamp = Timestamp(coordinates=data['coordinates'])
             obs_traj = ObstacleTrajectory(data['obstacle'], data['trajectory'])
             msg = ObstacleTrajectoriesMessage(timestamp, obs_traj)
-            self.traj_stream.send(msg)
+            self.tracking_stream.send(msg)
