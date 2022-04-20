@@ -12,14 +12,23 @@ from verifai.scenic_server import ScenicServer
 from verifai.falsifier import generic_falsifier, generic_parallel_falsifier
 from verifai.monitor import multi_objective_monitor
 
+
 # Load user configurations
 config_path = './config.json'
 with open(config_path, 'r') as file:
     config = json.load(file)
 
-# Assign platform parameters
-model_path = config['behavior_prediction_model']
+# Assign specification parameters
+in_dir = config['csv_in_dir']
+out_dir = config['csv_out_dir']
+threshADE = int(config['ADE_threshold'])
+threshFDE = int(config['FDE_threshold'])
+past_steps = int(config['past_steps'])
+future_steps = int(config['future_steps'])
 timepoint = int(config['timepoint'])
+num_preds = int(config['num_preds'])
+debug = bool(config['debug'])
+# Assign platform parameters
 sampler_type = config['sampler_type']
 num_workers = int(config['parallel_workers'])
 num_iters = int(config['simulations_per_scenario'])
@@ -41,8 +50,10 @@ falsifier_params = DotMap(
     max_time=None,
 )
 server_options = DotMap(maxSteps=max_steps, verbosity=0)
-monitor = ADE_FDE(model_path, timepoint=timepoint, parallel=is_parallel)
 falsifier_cls = generic_parallel_falsifier if is_parallel else generic_falsifier
+monitor = ADE_FDE(in_dir, out_dir, threshADE=threshADE, threshFDE=threshFDE,
+                  timepoint=timepoint, past_steps=past_steps, future_steps=future_steps,
+                  num_preds=num_preds, parallel=is_parallel, debug=debug)
 
 # Iterate over all Scenic programs
 for scenic_path in config['scenic_programs']:

@@ -2,8 +2,15 @@
    "scenic_programs": [
       "ex.scenic"
    ],
-   "behavior_prediction_model": "../../LaneGCN",
+   "csv_in_dir": "/absolute/path/to/input/directory",
+   "csv_out_dir": "/absolute/path/to/output/directory",
+   "ADE_threshold": "0.5",
+   "FDE_threshold": "1.0",
    "timepoint": "50",
+   "past_steps": "20",
+   "future_steps": "15",
+   "num_preds": "1",
+   "debug": "False",
    "sampler_type": "mab",
    "parallel_workers": "1",
    "simulations_per_scenario": "3",

@@ -29,7 +29,7 @@ class ADE_FDE(multi_objective_monitor):
         debug (py:class:bool): Indicates if debugging mode is on.
     """
 
-    def __init__(self, in_dir, out_dir, threshADE=0.1, threshFDE=1,
+    def __init__(self, in_dir, out_dir, threshADE=0.5, threshFDE=1.0,
                  timepoint=20, past_steps=20, future_steps=15,
                  num_preds=1, parallel=False, debug=False):
 
@@ -38,22 +38,26 @@ class ADE_FDE(multi_objective_monitor):
 
         flags.DEFINE_integer('prediction_num_past_steps', past_steps, '')
         flags.DEFINE_integer('prediction_num_future_steps', future_steps, '')
-        
+
         self.num_objectives = 2
 
         def specification(simulation):
             worker_num = simulation.worker_num if parallel else 0
             traj = simulation.trajectory
             num_agents = len(traj[0])
-            hist_traj = traj[timepoint-past_steps:timepoint]
+            past_traj = traj[timepoint-past_steps:timepoint]
             gt_traj = traj[timepoint:timepoint+future_steps]
+
             gts = np.asarray([(tj[-1][0], tj[-1][1]) for tj in gt_traj])
             gt_len = len(gts)
+
+            # Dictionary mapping agent_ids to ADE/FDE list (to support multi-modal predictions)
+            ADEs, FDEs = {}, {}
 
             if debug:
                 print(f'ADE Threshold: {threshADE}, FDE Threshold: {threshFDE}')
                 plt.plot([gt[-1][0] for gt in traj], [gt[-1][1] for gt in traj], color='black')
-                plt.plot([gt[-1][0] for gt in hist_traj], [gt[-1][1] for gt in hist_traj], color='blue')
+                plt.plot([gt[-1][0] for gt in past_traj], [gt[-1][1] for gt in past_traj], color='blue')
                 plt.plot([gt[-1][0] for gt in gt_traj], [gt[-1][1] for gt in gt_traj], color='yellow')
 
             # Write past trajectories to CSV file
@@ -73,11 +77,10 @@ class ADE_FDE(multi_objective_monitor):
             erdos.run()
 
             # Compute metrics from predicted and ground truth trajectories
-            ADEs, FDEs = [], []
-            for i in range(num_preds):
+            for pred_num in range(num_preds):
 
                 # Extract predicted trajectories from CSV file
-                output_csv_path = f'{out_dir}/pred_{worker_num}_{i}.csv'
+                output_csv_path = f'{out_dir}/pred_{worker_num}_{pred_num}.csv'
                 preds = np.genfromtxt(output_csv_path, delimiter=',', skip_header=1)
                 pred_len = preds.shape[0]
                 if gt_len < pred_len:
@@ -91,8 +94,7 @@ class ADE_FDE(multi_objective_monitor):
                             + (preds[i, 1] - gts[i, 1]) ** 2
                         )
                         for i in range(min(pred_len, gt_len))
-                    )
-                    / pred_len
+                    ) / pred_len
                 )
                 FDE = math.sqrt(
                     (preds[-1, 0] - gts[-1, 0]) ** 2
@@ -103,7 +105,7 @@ class ADE_FDE(multi_objective_monitor):
 
                 if debug:
                     print(f'ADE: {ADE}, FDE: {FDE}')
-                    p = pd.read_csv(f'{model_path}/results/lanegcn/predictions_{worker_num}_{i}.csv')
+                    p = pd.read_csv(f'{model_path}/results/lanegcn/predictions_{worker_num}_{pred_num}.csv')
                     plt.plot(p['X'], p['Y'], color='green')
 
             minADE, minFDE = min(ADEs), min(FDEs)

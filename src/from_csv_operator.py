@@ -41,7 +41,7 @@ class FromCsvOperator(erdos.Operator):
         traj_keys, traj_data = self.data[0], self.data[1:]
         assert traj_keys == ['timestamp', 'agent_id', 'x', 'y', 'yaw']
         
-        # Dictionary for mapping agents to trajectory data
+        # Dictionary mapping agents to trajectory data
         obs_trajs = {}
 
         for traj in traj_data:
