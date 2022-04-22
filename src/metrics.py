@@ -31,7 +31,7 @@ class ADE_FDE(multi_objective_monitor):
 
     def __init__(self, in_dir, out_dir, threshADE=0.5, threshFDE=1.0,
                  timepoint=20, past_steps=20, future_steps=15,
-                 num_preds=1, parallel=False, debug=False):
+                 parallel=False, debug=False):
 
         assert timepoint >= past_steps, 'Timepoint must be at least the number of past steps!'
         assert past_steps >= future_steps, 'Must track at least as many steps as we predict!'
@@ -44,21 +44,23 @@ class ADE_FDE(multi_objective_monitor):
         def specification(simulation):
             worker_num = simulation.worker_num if parallel else 0
             traj = simulation.trajectory
-            num_agents = len(traj[0])
-            past_traj = traj[timepoint-past_steps:timepoint]
-            gt_traj = traj[timepoint:timepoint+future_steps]
+            past_trajs = traj[timepoint-past_steps:timepoint]
+            gt_trajs = traj[timepoint:timepoint+future_steps]
+            gt_len = len(gt_trajs)
 
-            gts = np.asarray([(tj[-1][0], tj[-1][1]) for tj in gt_traj])
-            gt_len = len(gts)
-
-            # Dictionary mapping agent_ids to ADE/FDE list (to support multi-modal predictions)
-            ADEs, FDEs = {}, {}
+            # Dictionary mapping agent IDs to ground truth trajectories
+            gts = {}
+            for gt_traj in gt_trajs:
+                for agent_id, transform in enumerate(gt_traj):
+                    if agent_id not in gts:
+                        gts[agent_id] = np.array()
+                    gts[agent_id].append(transform)
 
             if debug:
                 print(f'ADE Threshold: {threshADE}, FDE Threshold: {threshFDE}')
                 plt.plot([gt[-1][0] for gt in traj], [gt[-1][1] for gt in traj], color='black')
-                plt.plot([gt[-1][0] for gt in past_traj], [gt[-1][1] for gt in past_traj], color='blue')
-                plt.plot([gt[-1][0] for gt in gt_traj], [gt[-1][1] for gt in gt_traj], color='yellow')
+                plt.plot([gt[-1][0] for gt in past_trajs], [gt[-1][1] for gt in past_trajs], color='blue')
+                plt.plot([gt[-1][0] for gt in gt_trajs], [gt[-1][1] for gt in gt_trajs], color='yellow')
 
             # Write past trajectories to CSV file
             input_csv_path = f'{in_dir}/past_{worker_num}_0.csv'
@@ -76,39 +78,48 @@ class ADE_FDE(multi_objective_monitor):
             erdos.connect(ToCsvOperator, erdos.OperatorConfig(), [prediction_stream], out_dir, worker_num)
             erdos.run()
 
-            # Compute metrics from predicted and ground truth trajectories
-            for pred_num in range(num_preds):
+            # Extract predicted trajectories from CSV file
+            output_csv_path = f'{out_dir}/pred_{worker_num}.csv'
+            pred_trajs = np.genfromtxt(output_csv_path, delimiter=',', skip_header=1)
+            pred_len = pred_trajs.shape[0]
+            if gt_len < pred_len:
+                pred_trajs = pred_trajs[:gt_len]
 
-                # Extract predicted trajectories from CSV file
-                output_csv_path = f'{out_dir}/pred_{worker_num}_{pred_num}.csv'
-                preds = np.genfromtxt(output_csv_path, delimiter=',', skip_header=1)
-                pred_len = preds.shape[0]
-                if gt_len < pred_len:
-                    preds = preds[:gt_len]
+            # Sort by timestamp
+            pred_trajs = pred_trajs[pred_trajs[:, 0].argsort()]
 
-                # Compute ADE and FDE metrics
-                ADE = float(
+            # Dictionary mapping agent IDs to predicted trajectories
+            preds = {}
+            for pred_traj in pred_trajs:
+                _, agent_id, x, y, yaw = pred_traj
+                if agent_id not in preds:
+                    preds[agent_id] = np.array()
+                preds[agent_id].append((x, y, yaw))
+
+            # Dictionary mapping agent IDs to ADEs/FDEs
+            ADEs, FDEs = {}, {}
+            for agent_id, pred in preds.items():
+                gt = gts[agent_id]
+                ADEs[agent_id] = float(
                     sum(
                         math.sqrt(
-                            (preds[i, 0] - gts[i, 0]) ** 2
-                            + (preds[i, 1] - gts[i, 1]) ** 2
+                            (pred[i, 0] - gt[i, 0]) ** 2
+                            + (pred[i, 1] - gt[i, 1]) ** 2
                         )
                         for i in range(min(pred_len, gt_len))
                     ) / pred_len
                 )
-                FDE = math.sqrt(
-                    (preds[-1, 0] - gts[-1, 0]) ** 2
-                    + (preds[-1, 1] - gts[-1, 1]) ** 2
+                FDEs[agent_id] = math.sqrt(
+                    (pred[-1, 0] - gt[-1, 0]) ** 2
+                    + (pred[-1, 1] - gt[-1, 1]) ** 2
                 )
-                ADEs.append(ADE)
-                FDEs.append(FDE)
 
-                if debug:
-                    print(f'ADE: {ADE}, FDE: {FDE}')
-                    p = pd.read_csv(f'{model_path}/results/lanegcn/predictions_{worker_num}_{pred_num}.csv')
-                    plt.plot(p['X'], p['Y'], color='green')
+            if debug:
+                print(f'ADE: {ADE}, FDE: {FDE}')
+                p = pd.read_csv(f'{model_path}/results/lanegcn/predictions_{worker_num}.csv')
+                plt.plot(p['X'], p['Y'], color='green')
 
-            minADE, minFDE = min(ADEs), min(FDEs)
+            minADE, minFDE = min(ADEs.values()), min(FDEs.values())
             print(f'minADE: {minADE}, minFDE: {minFDE}')
             rho = (threshADE - minADE, threshFDE - minFDE)
 

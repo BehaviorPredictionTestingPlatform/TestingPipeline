@@ -23,7 +23,7 @@ class ToCsvOperator(erdos.Operator):
     """
     def __init__(self, prediction_stream: erdos.ReadStream, csv_file_dir: str, worker_num: int):
         self.prediction_stream = prediction_stream
-        self.csv_file = open(f'{csv_file_dir}/pred_{worker_num}_0.csv', 'w', newline='')
+        self.csv_file = open(f'{csv_file_dir}/pred_{worker_num}.csv', 'w', newline='')
         self.writer = csv.writer(self.csv_file)
 
     @staticmethod

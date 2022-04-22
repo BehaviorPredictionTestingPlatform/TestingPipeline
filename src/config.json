@@ -9,7 +9,6 @@
    "timepoint": "50",
    "past_steps": "20",
    "future_steps": "15",
-   "num_preds": "1",
    "debug": "False",
    "sampler_type": "mab",
    "parallel_workers": "1",

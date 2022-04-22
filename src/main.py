@@ -26,7 +26,6 @@ threshFDE = int(config['FDE_threshold'])
 past_steps = int(config['past_steps'])
 future_steps = int(config['future_steps'])
 timepoint = int(config['timepoint'])
-num_preds = int(config['num_preds'])
 debug = bool(config['debug'])
 # Assign platform parameters
 sampler_type = config['sampler_type']
@@ -53,7 +52,7 @@ server_options = DotMap(maxSteps=max_steps, verbosity=0)
 falsifier_cls = generic_parallel_falsifier if is_parallel else generic_falsifier
 monitor = ADE_FDE(in_dir, out_dir, threshADE=threshADE, threshFDE=threshFDE,
                   timepoint=timepoint, past_steps=past_steps, future_steps=future_steps,
-                  num_preds=num_preds, parallel=is_parallel, debug=debug)
+                  parallel=is_parallel, debug=debug)
 
 # Iterate over all Scenic programs
 for scenic_path in config['scenic_programs']:
