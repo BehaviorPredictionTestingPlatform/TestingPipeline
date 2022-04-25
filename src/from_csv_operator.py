@@ -24,7 +24,7 @@ class FromCsvOperator(erdos.Operator):
         csv_file_path (:py:class:str): Absolute path to CSV file to read from.
     """
     def __init__(self, csv_file_path: str):
-        self.csv_file = open(csv_file_path, 'r'):
+        self.csv_file = open(csv_file_path, 'r')
         self.data = csv.reader(self.csv_file)
         self.tracking_stream = erdos.WriteStream()
 
