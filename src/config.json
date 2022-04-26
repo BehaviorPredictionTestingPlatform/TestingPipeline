@@ -2,8 +2,6 @@
    "scenic_programs": [
       "ex.scenic"
    ],
-   "csv_in_dir": "/absolute/path/to/input/directory",
-   "csv_out_dir": "/absolute/path/to/output/directory",
    "ADE_threshold": "0.5",
    "FDE_threshold": "1.0",
    "timepoint": "50",
