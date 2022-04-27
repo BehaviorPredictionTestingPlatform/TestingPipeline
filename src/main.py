@@ -5,7 +5,7 @@ import os
 import time
 from dotmap import DotMap
 
-from metrics import Erdos_ADE_FDE
+from metrics import Pylot_ADE_FDE
 from utils import announce
 
 from verifai.samplers.scenic_sampler import ScenicSampler
