@@ -1,6 +1,6 @@
 {
    "scenic_programs": [
-      "ex.scenic"
+      "../../ScenarioLibrary/src/scenic/01.scenic"
    ],
    "ADE_threshold": "0.5",
    "FDE_threshold": "1.0",

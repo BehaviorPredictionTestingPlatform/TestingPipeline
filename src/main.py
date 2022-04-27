@@ -1,6 +1,5 @@
 import absl.app
 import json
-import math
 import os
 import time
 from dotmap import DotMap
@@ -8,11 +7,11 @@ from dotmap import DotMap
 from metrics import Pylot_ADE_FDE
 from utils import announce
 
+import scenic.core.errors as errors; errors.showInternalBacktrace = True
+
 from verifai.samplers.scenic_sampler import ScenicSampler
 from verifai.scenic_server import ScenicServer
 from verifai.falsifier import generic_falsifier, generic_parallel_falsifier
-from verifai.monitor import multi_objective_monitor
-
 
 def main(argv):
     # Load user configurations
@@ -51,17 +50,16 @@ def main(argv):
     server_options = DotMap(maxSteps=max_steps, verbosity=0)
     falsifier_cls = generic_parallel_falsifier if is_parallel else generic_falsifier
     monitor = Pylot_ADE_FDE(threshADE=threshADE, threshFDE=threshFDE,
-                      timepoint=timepoint, past_steps=past_steps, future_steps=future_steps,
-                      parallel=is_parallel, debug=debug)
+                            timepoint=timepoint, past_steps=past_steps, future_steps=future_steps,
+                            parallel=is_parallel, debug=debug)
 
     # Iterate over all Scenic programs
     for scenic_path in config['scenic_programs']:
         announce(f'RUNNING SCENIC PROGRAM {scenic_path}')
         sampler = ScenicSampler.fromScenario(scenic_path, **params)
-        falsifier = falsifier_cls(sampler=sampler, falsifier_params=falsifier_params,
-                                    server_class=ScenicServer, server_options=server_options,
-                                    monitor=monitor, scenic_path=scenic_path,
-                                    scenario_params=params, num_workers=num_workers)
+        falsifier = falsifier_cls(monitor=monitor, sampler_type=sampler_type,
+                                  sampler=sampler, falsifier_params=falsifier_params,
+                                  server_options=server_options, server_class=ScenicServer)
         t0 = time.time()
         falsifier.run_falsifier()
         t = time.time() - t0
