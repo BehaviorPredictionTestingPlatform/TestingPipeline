@@ -34,7 +34,7 @@ def main(argv):
     output_dir = config['output_dir']
     max_steps = int(config['time_per_simulation'])
     inputs = config['input']
-    headless = config['headless_mode']
+    headless = bool(config['headless_mode'])
 
     # Store Scenic and VerifAI parameters
     is_parallel = num_workers > 1
