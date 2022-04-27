@@ -15,5 +15,6 @@
    "time_per_simulation": "200",
    "input": [
    	"trajectory"
-   ]
+   ],
+   "headless_mode": "False"
 }
