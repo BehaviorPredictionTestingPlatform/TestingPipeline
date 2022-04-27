@@ -13,6 +13,7 @@ from verifai.scenic_server import ScenicServer
 from verifai.falsifier import generic_falsifier, generic_parallel_falsifier
 from verifai.monitor import multi_objective_monitor
 
+
 def main(argv):
     # Load user configurations
     config_path = './config.json'
@@ -20,8 +21,8 @@ def main(argv):
         config = json.load(file)
 
     # Assign specification parameters
-    threshADE = int(config['ADE_threshold'])
-    threshFDE = int(config['FDE_threshold'])
+    threshADE = float(config['ADE_threshold'])
+    threshFDE = float(config['FDE_threshold'])
     past_steps = int(config['past_steps'])
     future_steps = int(config['future_steps'])
     timepoint = int(config['timepoint'])
