@@ -55,8 +55,7 @@ def store_pred_stream(stream):
             agent_id = pred.obstacle_trajectory.obstacle.id
             if agent_id not in preds:
                 preds[agent_id] = []
-            for i, traj in enumerate(pred.predicted_trajectory):
-                timestamp = msg.timestamp.coordinates[i]
+            for _, traj in enumerate(pred.predicted_trajectory):
                 x, y = traj.location.x, traj.location.y
                 yaw = traj.rotation.yaw
                 preds[agent_id].append((x, y, yaw))

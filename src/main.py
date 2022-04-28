@@ -1,6 +1,7 @@
 import absl.app
 import json
 import os
+import subprocess
 import time
 from dotmap import DotMap
 
@@ -13,6 +14,9 @@ from verifai.samplers.scenic_sampler import ScenicSampler
 from verifai.scenic_server import ScenicServer
 from verifai.falsifier import generic_falsifier, generic_parallel_falsifier
 
+
+PYLOT_PORT = 8000
+
 def main(argv):
     # Load user configurations
     config_path = './config.json'
@@ -22,10 +26,10 @@ def main(argv):
     # Assign specification parameters
     threshADE = float(config['ADE_threshold'])
     threshFDE = float(config['FDE_threshold'])
+    pred_radius = 500  # this shouldn't change
     past_steps = int(config['past_steps'])
     future_steps = int(config['future_steps'])
     timepoint = int(config['timepoint'])
-    debug = bool(config['debug'])
     # Assign platform parameters
     sampler_type = config['sampler_type']
     num_workers = int(config['parallel_workers'])
@@ -49,9 +53,9 @@ def main(argv):
     )
     server_options = DotMap(maxSteps=max_steps, verbosity=0)
     falsifier_cls = generic_parallel_falsifier if is_parallel else generic_falsifier
-    monitor = Pylot_ADE_FDE(threshADE=threshADE, threshFDE=threshFDE,
+    monitor = Pylot_ADE_FDE(threshADE=threshADE, threshFDE=threshFDE, pred_radius=pred_radius,
                             timepoint=timepoint, past_steps=past_steps, future_steps=future_steps,
-                            parallel=is_parallel, debug=debug)
+                            pylot_port=PYLOT_PORT)
 
     # Iterate over all Scenic programs
     for scenic_path in config['scenic_programs']:
@@ -88,4 +92,8 @@ def main(argv):
             df.to_csv(outpath)
 
 if __name__ == '__main__':
+    print('Killing all processes at port', PYLOT_PORT)
+    subprocess.run(['fuser', '-k', f'{PYLOT_PORT}/tcp'])
     absl.app.run(main)
+    subprocess.run(['fuser', '-k', f'{PYLOT_PORT}/tcp'])
+

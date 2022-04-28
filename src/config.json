@@ -1,20 +1,22 @@
 {
-   "scenic_programs": [
-      "../../ScenarioLibrary/src/scenic/01.scenic"
-   ],
-   "ADE_threshold": "0.5",
-   "FDE_threshold": "1.0",
-   "timepoint": "50",
-   "past_steps": "20",
-   "future_steps": "15",
-   "debug": "False",
-   "sampler_type": "mab",
-   "parallel_workers": "1",
-   "simulations_per_scenario": "3",
-   "output_dir": "../output",
-   "time_per_simulation": "200",
-   "input": [
-   	"trajectory"
-   ],
-   "headless_mode": "False"
+  "scenic_programs": [
+    "../../ScenarioLibrary/src/scenic/01.scenic",
+    "../../ScenarioLibrary/src/scenic/02.scenic",
+    "../../ScenarioLibrary/src/scenic/03.scenic",
+    "../../ScenarioLibrary/src/scenic/04.scenic"
+  ],
+  "ADE_threshold": "0.5",
+  "FDE_threshold": "1.0",
+  "timepoint": "50",
+  "past_steps": "20",
+  "future_steps": "15",
+  "sampler_type": "mab",
+  "parallel_workers": "1",
+  "simulations_per_scenario": "5",
+  "output_dir": "../output",
+  "time_per_simulation": "200",
+  "input": [
+    "trajectory"
+  ],
+  "headless_mode": "True"
 }

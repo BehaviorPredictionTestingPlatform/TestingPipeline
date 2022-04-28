@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 
 from utils import store_pred_stream, stream_traj, compute_ADE, compute_FDE
 
@@ -19,37 +18,34 @@ class Pylot_ADE_FDE(multi_objective_monitor):
        and Final Displacement Error metrics.
 
     Args:
-        out_dir (py:class:str): Absolute dir path to write predictions.
         threshADE (py:class:float): Failure threshold for ADE metric.
         threshFDE (py:class:float): Failure threshold for FDE metric.
+        pred_radius (py:class:int): Radius of vehicles to target.
         timepoint (py:class:int): Timestep at which to start prediction.
         past_steps (py:class:int): Number of timesteps to supply model.
         future_steps (py:class:int): Number of timesteps to receive from model.
-        num_preds (py:class:int): Number of predictions to receive from model.
-        parallel (py:class:bool): Indicates if using parallelized VerifAI.
-        debug (py:class:bool): Indicates if debugging mode is on.
+        pylot_port (py:class:int): Port number used by Pylot processes.
     """
 
-    def __init__(self, threshADE=0.5, threshFDE=1.0,
+    def __init__(self, threshADE=0.5, threshFDE=1.0, pred_radius=100,
                  timepoint=20, past_steps=20, future_steps=15,
-                 parallel=False, debug=False):
+                 pylot_port=8000):
 
         assert timepoint >= past_steps, 'Timepoint must be at least the number of past steps!'
         assert past_steps >= future_steps, 'Must track at least as many steps as we predict!'
-
+        
+        flags.FLAGS.__delattr__('prediction_radius')
         flags.FLAGS.__delattr__('prediction_num_past_steps')
         flags.FLAGS.__delattr__('prediction_num_future_steps')
+        flags.DEFINE_integer('prediction_radius', pred_radius, '')
         flags.DEFINE_integer('prediction_num_past_steps', past_steps, '')
         flags.DEFINE_integer('prediction_num_future_steps', future_steps, '')
 
         self.num_objectives = 2
 
         def specification(simulation):
-            worker_num = simulation.worker_num if parallel else 0
             traj = simulation.trajectory
-            past_trajs = traj[timepoint-past_steps:timepoint]
             gt_trajs = traj[timepoint:timepoint+future_steps]
-            gt_len = len(gt_trajs)
 
             # Dictionary mapping agent IDs to ground truth trajectories
             gts = {}
@@ -60,12 +56,6 @@ class Pylot_ADE_FDE(multi_objective_monitor):
                     gts[agent_id].append(transform)
             for agent_id, gt in gts.items():
                 gts[agent_id] = np.array(gt)
-
-            if debug:
-                print(f'ADE Threshold: {threshADE}, FDE Threshold: {threshFDE}')
-                plt.plot([gt[-1][0] for gt in traj], [gt[-1][1] for gt in traj], color='black')
-                plt.plot([gt[-1][0] for gt in past_trajs], [gt[-1][1] for gt in past_trajs], color='blue')
-                plt.plot([gt[-1][0] for gt in gt_trajs], [gt[-1][1] for gt in gt_trajs], color='yellow')
 
             # Run behavior prediction model
             traj_stream = IngestStream()
@@ -85,22 +75,12 @@ class Pylot_ADE_FDE(multi_objective_monitor):
                 ADEs[agent_id] = compute_ADE(pred, gt)
                 FDEs[agent_id] = compute_FDE(pred, gt)
 
-            if debug:
-                print(f'ADE: {ADE}, FDE: {FDE}')
-                p = pd.read_csv(output_csv_path)
-                plt.plot(p['X'], p['Y'], color='green')
-
-            minADE, minFDE = min(ADEs.values()), min(FDEs.values())
-            rho = (threshADE - minADE, threshFDE - minFDE)
-            
             print(f'ADEs: {ADEs}, FDEs: {FDEs}')
+            minADE, minFDE = min(ADEs.values()), min(FDEs.values())
             print(f'minADE: {minADE}, minFDE: {minFDE}')
 
-            if debug:
-                plt.show()
-
+            rho = (minADE, minFDE)
             driver_handle.shutdown()
-
             return rho
 
         super().__init__(specification, priority_graph=None, linearize=False)
