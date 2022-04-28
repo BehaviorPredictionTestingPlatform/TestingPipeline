@@ -65,22 +65,26 @@ class Pylot_ADE_FDE(multi_objective_monitor):
             )
             extract_stream = ExtractStream(pred_stream)
             driver_handle = erdos.run_async()
-            stream_traj(traj_stream, timepoint, past_steps, traj)
-            preds = store_pred_stream(extract_stream)
+            try:
+              stream_traj(traj_stream, timepoint, past_steps, traj)
+              preds = store_pred_stream(extract_stream)
 
-            # Dictionary mapping agent IDs to ADEs/FDEs
-            ADEs, FDEs = {}, {}
-            for agent_id, pred in preds.items():
-                gt = gts[agent_id]
-                ADEs[agent_id] = compute_ADE(pred, gt)
-                FDEs[agent_id] = compute_FDE(pred, gt)
+              # Dictionary mapping agent IDs to ADEs/FDEs
+              ADEs, FDEs = {}, {}
+              for agent_id, pred in preds.items():
+                  gt = gts[agent_id]
+                  ADEs[agent_id] = compute_ADE(pred, gt)
+                  FDEs[agent_id] = compute_FDE(pred, gt)
 
-            print(f'ADEs: {ADEs}, FDEs: {FDEs}')
-            minADE, minFDE = min(ADEs.values()), min(FDEs.values())
-            print(f'minADE: {minADE}, minFDE: {minFDE}')
+              print(f'ADEs: {ADEs}, FDEs: {FDEs}')
+              minADE, minFDE = min(ADEs.values()), min(FDEs.values())
+              print(f'minADE: {minADE}, minFDE: {minFDE}')
 
-            rho = (minADE, minFDE)
-            driver_handle.shutdown()
-            return rho
+              rho = (minADE, minFDE)
+              driver_handle.shutdown()
+              return rho
+              
+            except:
+                driver_handle.shutdown()
 
         super().__init__(specification, priority_graph=None, linearize=False)

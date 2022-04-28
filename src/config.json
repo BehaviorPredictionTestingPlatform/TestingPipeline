@@ -1,9 +1,9 @@
 {
   "scenic_programs": [
-    "../../ScenarioLibrary/src/scenic/01.scenic",
-    "../../ScenarioLibrary/src/scenic/02.scenic",
-    "../../ScenarioLibrary/src/scenic/03.scenic",
-    "../../ScenarioLibrary/src/scenic/04.scenic"
+    "../../ScenarioLibrary/src/scenic/14.scenic",
+    "../../ScenarioLibrary/src/scenic/15.scenic",
+    "../../ScenarioLibrary/src/scenic/16.scenic",
+    "../../ScenarioLibrary/src/scenic/17.scenic"
   ],
   "ADE_threshold": "0.5",
   "FDE_threshold": "1.0",

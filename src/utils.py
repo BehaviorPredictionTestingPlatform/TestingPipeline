@@ -43,9 +43,7 @@ def stream_traj(stream, timepoint, past_steps, traj):
         stream.send(msg)
 
     # Send watermark message to indicate completion
-    top_timestamp = Timestamp(coordinates=[timepoint], is_top=True)
-    watermark_msg = WatermarkMessage(top_timestamp)
-    stream.send(watermark_msg)
+    stream.send(WatermarkMessage(Timestamp(is_top=True)))
 
 def store_pred_stream(stream):
     # Dictionary mapping agent IDs to predicted trajectories
