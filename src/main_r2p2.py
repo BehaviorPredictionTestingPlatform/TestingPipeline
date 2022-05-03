@@ -8,7 +8,8 @@ from dotmap import DotMap
 from metrics.metrics_r2p2 import ADE_FDE
 from utils.utils import announce
 
-import scenic.core.errors as errors; errors.showInternalBacktrace = True
+import scenic.core.errors as errors
+errors.showInternalBacktrace = True
 
 from verifai.samplers.scenic_sampler import ScenicSampler
 from verifai.scenic_server import ScenicServer
@@ -26,8 +27,6 @@ def main(argv):
     # Assign specification parameters
     lidar_filepath = config['sensor_output_dir'] + '/lidar.json'
     sensor_config_filepath = config['sensor_config_path']
-    threshADE = float(config['ADE_threshold'])
-    threshFDE = float(config['FDE_threshold'])
     pred_radius = 500  # this shouldn't change
     past_steps = int(config['past_steps'])
     future_steps = int(config['future_steps'])
@@ -47,6 +46,7 @@ def main(argv):
     params['render'] = not headless
     params['record'] = any([i in inputs for i in \
         ('rgb', 'depth', 'semantic_segmentation', 'lidar', 'radar')])
+    params['sensor_config'] = sensor_config_filepath
     falsifier_params = DotMap(
         n_iters=num_iters,
         save_error_table=True,
@@ -56,9 +56,7 @@ def main(argv):
     server_options = DotMap(maxSteps=max_steps, verbosity=0)
     falsifier_cls = generic_parallel_falsifier if is_parallel else generic_falsifier
     monitor = ADE_FDE(lidar_filepath=lidar_filepath, sensor_config_filepath=sensor_config_filepath,
-                      threshADE=threshADE, threshFDE=threshFDE, pred_radius=pred_radius,
-                      timepoint=timepoint, past_steps=past_steps, future_steps=future_steps,
-                      pylot_port=PYLOT_PORT)
+                      pred_radius=pred_radius, timepoint=timepoint, past_steps=past_steps, future_steps=future_steps)
 
     # Iterate over all Scenic programs
     for scenic_path in config['scenic_programs']:

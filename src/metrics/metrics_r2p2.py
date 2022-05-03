@@ -28,19 +28,14 @@ class ADE_FDE(multi_objective_monitor):
     Args:
         lidar_filepath (py:class:str): Absolute path to JSON file of LiDAR data.
         sensor_config_filepath (py:class:str): Absolute path to sensor config file.
-        threshADE (py:class:float): Failure threshold for ADE metric.
-        threshFDE (py:class:float): Failure threshold for FDE metric.
         pred_radius (py:class:int): Radius of vehicles to target.
         timepoint (py:class:int): Timestep at which to start prediction.
         past_steps (py:class:int): Number of timesteps to supply model.
         future_steps (py:class:int): Number of timesteps to receive from model.
-        pylot_port (py:class:int): Port number used by Pylot processes.
     """
 
     def __init__(self, lidar_filepath, sensor_config_filepath,
-                 threshADE=0.5, threshFDE=1.0, pred_radius=100,
-                 timepoint=20, past_steps=20, future_steps=15,
-                 pylot_port=8000):
+                 pred_radius=100, timepoint=20, past_steps=20, future_steps=15):
 
         assert timepoint >= past_steps, 'Timepoint must be at least the number of past steps!'
         assert past_steps >= future_steps, 'Must track at least as many steps as we predict!'
