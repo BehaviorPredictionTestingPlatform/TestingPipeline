@@ -1,9 +1,9 @@
 {
   "scenic_programs": [
-    "../../ScenarioLibrary/src/scenic/01.scenic"
+    "/home/carla_challenge/Desktop/kaleab/ScenarioLibrary/src/scenic/01.scenic"
   ],
   "sensor_output_dir": "/home/carla_challenge/Desktop/kaleab/TestingPipeline/data",
-  "sensor_config_path": "/home/carla_challenge/Desktop/kaleab/TestingPipeline/src/sensor_config.json",
+  "sensor_config_path": "/home/carla_challenge/Desktop/kaleab/TestingPipeline/src/configs/sensor_config.json",
   "ADE_threshold": "0.5",
   "FDE_threshold": "1.0",
   "timepoint": "50",

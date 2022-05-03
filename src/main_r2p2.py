@@ -5,8 +5,8 @@ import subprocess
 import time
 from dotmap import DotMap
 
-from metrics_r2p2 import PylotR2P2_ADE_FDE
-from utils import announce
+from metrics.metrics_r2p2 import ADE_FDE
+from utils.utils import announce
 
 import scenic.core.errors as errors; errors.showInternalBacktrace = True
 
@@ -19,7 +19,7 @@ PYLOT_PORT = 8000
 
 def main(argv):
     # Load user configurations
-    config_path = './config.json'
+    config_path = 'configs/config_r2p2.json'
     with open(config_path, 'r') as file:
         config = json.load(file)
 
@@ -55,10 +55,10 @@ def main(argv):
     )
     server_options = DotMap(maxSteps=max_steps, verbosity=0)
     falsifier_cls = generic_parallel_falsifier if is_parallel else generic_falsifier
-    monitor = PylotR2P2_ADE_FDE(lidar_filepath=lidar_filepath, sensor_config_filepath=sensor_config_filepath,
-                                threshADE=threshADE, threshFDE=threshFDE, pred_radius=pred_radius,
-                                timepoint=timepoint, past_steps=past_steps, future_steps=future_steps,
-                                pylot_port=PYLOT_PORT)
+    monitor = ADE_FDE(lidar_filepath=lidar_filepath, sensor_config_filepath=sensor_config_filepath,
+                      threshADE=threshADE, threshFDE=threshFDE, pred_radius=pred_radius,
+                      timepoint=timepoint, past_steps=past_steps, future_steps=future_steps,
+                      pylot_port=PYLOT_PORT)
 
     # Iterate over all Scenic programs
     for scenic_path in config['scenic_programs']:

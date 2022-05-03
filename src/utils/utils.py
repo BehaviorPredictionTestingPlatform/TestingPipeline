@@ -20,6 +20,7 @@ def announce(message):
     print(border)
 
 def stream_traj(stream, timepoint, past_steps, traj):
+    print('here')
     # Dictionary mapping agents to trajectory data
     obs_trajs = {}
     for timestamp in range(timepoint-past_steps, timepoint):
@@ -43,10 +44,14 @@ def stream_traj(stream, timepoint, past_steps, traj):
         timestamp = Timestamp(coordinates=data['coordinates'])
         obs_traj = [ObstacleTrajectory(data['obstacle'], data['trajectory'])]
         msg = ObstacleTrajectoriesMessage(timestamp, obs_traj)
+        n, _ = msg.get_nearby_obstacles_info(
+                500,
+                lambda t: t.obstacle.is_vehicle())
+        print(n)
         stream.send(msg)
 
     # Send watermark message to indicate completion
-    stream.send(WatermarkMessage(Timestamp()))
+    stream.send(WatermarkMessage(Timestamp(coordinates=[timepoint])))
 
 def get_lidar_setup(sensor_config_filepath):
     # Supported `LidarSetup` settings
@@ -79,17 +84,13 @@ def get_lidar_setup(sensor_config_filepath):
                              **sensor_configs)
     return lidar_setup
 
-def stream_pc(stream, timepoint, lidar_filepath, sensor_config_filepath):
-    
-    
+def stream_pc(stream, timepoint, lidar_filepath, lidar_setup):
     # Extract LiDAR points as numpy arrays
     lidar_file = open(lidar_filepath, 'r')
     lidar_data = json.load(lidar_file)
     lidar_file.close()
     points = np.array([[d[0],d[1],d[2]] for d in lidar_data[0]])
 
-    lidar_setup = get_lidar_setup(sensor_config_filepath)
-    
     # Stream point cloud at timestep one before timepoint
     timestamp = Timestamp(coordinates=[timepoint-1])
     pc = PointCloud(points, lidar_setup)
@@ -97,7 +98,7 @@ def stream_pc(stream, timepoint, lidar_filepath, sensor_config_filepath):
     stream.send(msg)
 
     # Send watermark message to indicate completion
-    stream.send(WatermarkMessage(Timestamp()))
+    stream.send(WatermarkMessage(Timestamp(coordinates=[timepoint])))
 
 def store_pred_stream(stream):
     # Dictionary mapping agent IDs to predicted trajectories
