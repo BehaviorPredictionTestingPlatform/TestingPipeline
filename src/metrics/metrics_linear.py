@@ -1,6 +1,8 @@
 import numpy as np
 
 from utils.utils import (
+  close_stream,
+  get_egocentric_traj,
   store_pred_stream,
   stream_traj,
   compute_ADE,
@@ -42,7 +44,7 @@ class ADE_FDE(multi_objective_monitor):
         self.num_objectives = 2
 
         def specification(simulation):
-            traj = simulation.trajectory
+            traj = get_egocentric_traj(simulation.trajectory)
             gt_trajs = traj[timepoint:timepoint+future_steps]
 
             # Dictionary mapping agent IDs to ground truth trajectories
@@ -65,6 +67,7 @@ class ADE_FDE(multi_objective_monitor):
             driver_handle = erdos.run_async()
             try:
               stream_traj(traj_stream, timepoint, past_steps, traj)
+              close_stream(traj_stream, timepoint, is_top=True)
               preds = store_pred_stream(extract_stream)
 
               # Dictionary mapping agent IDs to ADEs/FDEs
@@ -74,11 +77,15 @@ class ADE_FDE(multi_objective_monitor):
                   ADEs[agent_id] = compute_ADE(pred, gt)
                   FDEs[agent_id] = compute_FDE(pred, gt)
 
-              print(f'ADEs: {ADEs}, FDEs: {FDEs}')
-              minADE, minFDE = min(ADEs.values()), min(FDEs.values())
-              print(f'minADE: {minADE}, minFDE: {minFDE}')
 
-              rho = (minADE, minFDE)
+              print(f'ADEs: {ADEs}, FDEs: {FDEs}')
+              ADE_vals, FDE_vals = ADEs.values(), FDEs.values()
+              minADE, minFDE = min(ADE_vals), min(FDE_vals)
+              print(f'minADE: {minADE}, minFDE: {minFDE}')
+              AADE, AFDE = sum(ADE_vals)/len(ADE_vals), sum(FDE_vals)/len(FDE_vals)
+              print(f'AADE: {AADE}, AFDE: {AFDE}')
+
+              rho = (minADE, minFDE, AADE, AFDE)
               driver_handle.shutdown()
               return rho
               

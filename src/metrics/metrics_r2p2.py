@@ -1,6 +1,8 @@
 import numpy as np
 
 from utils.utils import (
+  close_stream,
+  get_egocentric_traj,
   get_lidar_setup,
   store_pred_stream,
   stream_pc,
@@ -56,7 +58,7 @@ class ADE_FDE(multi_objective_monitor):
         self.num_objectives = 2
 
         def specification(simulation):
-            traj = simulation.trajectory
+            traj = get_egocentric_traj(simulation.trajectory)
             gt_trajs = traj[timepoint:timepoint+future_steps]
 
             # Dictionary mapping agent IDs to ground truth trajectories
@@ -80,6 +82,8 @@ class ADE_FDE(multi_objective_monitor):
             try:
               stream_pc(pc_stream, timepoint, lidar_filepath, lidar_setup)
               stream_traj(traj_stream, timepoint, past_steps, traj)
+              close_stream(pc_stream, timepoint)
+              close_stream(traj_stream, timepoint)
               preds = store_pred_stream(extract_stream)
 
               # Dictionary mapping agent IDs to ADEs/FDEs

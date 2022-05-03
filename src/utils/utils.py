@@ -19,8 +19,21 @@ def announce(message):
     print(m)
     print(border)
 
+def get_egocentric_traj(traj):
+    """Redefines all points to the ego vehicle's frame of reference."""
+    egocentric_traj = []
+    for timestep in traj:
+        new_timestep = []
+        ego_x, ego_y, _ = timestep[0]
+        for (x, y, yaw) in timestep[1:]:
+          new_timestep.append((x-ego_x, y-ego_y, yaw))
+        egocentric_traj.append(new_timestep)
+    return egocentric_traj
+
+def close_stream(stream, timepoint, is_top=False):
+    stream.send(WatermarkMessage(Timestamp(coordinates=[timepoint], is_top=is_top)))
+
 def stream_traj(stream, timepoint, past_steps, traj):
-    print('here')
     # Dictionary mapping agents to trajectory data
     obs_trajs = {}
     for timestamp in range(timepoint-past_steps, timepoint):
@@ -39,19 +52,12 @@ def stream_traj(stream, timepoint, past_steps, traj):
                 Transform(location=Location(x=x, y=y),
                           rotation=Rotation(yaw=yaw)))
 
-    # Stream each agent's trajectory
+    # Stream agent trajectories
     for _, data in obs_trajs.items():
         timestamp = Timestamp(coordinates=data['coordinates'])
         obs_traj = [ObstacleTrajectory(data['obstacle'], data['trajectory'])]
         msg = ObstacleTrajectoriesMessage(timestamp, obs_traj)
-        n, _ = msg.get_nearby_obstacles_info(
-                500,
-                lambda t: t.obstacle.is_vehicle())
-        print(n)
         stream.send(msg)
-
-    # Send watermark message to indicate completion
-    stream.send(WatermarkMessage(Timestamp(coordinates=[timepoint])))
 
 def get_lidar_setup(sensor_config_filepath):
     # Supported `LidarSetup` settings
@@ -96,9 +102,6 @@ def stream_pc(stream, timepoint, lidar_filepath, lidar_setup):
     pc = PointCloud(points, lidar_setup)
     msg = PointCloudMessage(timestamp, pc)
     stream.send(msg)
-
-    # Send watermark message to indicate completion
-    stream.send(WatermarkMessage(Timestamp(coordinates=[timepoint])))
 
 def store_pred_stream(stream):
     # Dictionary mapping agent IDs to predicted trajectories

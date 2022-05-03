@@ -8,7 +8,8 @@ from dotmap import DotMap
 from metrics.metrics_linear import ADE_FDE
 from utils.utils import announce
 
-import scenic.core.errors as errors; errors.showInternalBacktrace = True
+import scenic.core.errors as errors
+errors.showInternalBacktrace = True
 
 from verifai.samplers.scenic_sampler import ScenicSampler
 from verifai.scenic_server import ScenicServer
@@ -64,28 +65,12 @@ def main(argv):
         falsifier.run_falsifier()
         t = time.time() - t0
         print(f'\nGenerated {len(falsifier.samples)} samples in {t} seconds with {falsifier.num_workers} workers')
-        print(f'Number of counterexamples: {len(falsifier.error_table.table)}')
-        print(f'Confidence interval: {falsifier.get_confidence_interval()}')
-        
-        tables = []
-        if falsifier_params.save_error_table:
-            tables.append(falsifier.error_table.table)
-            tables.append(falsifier.safe_table.table)
+
         root, _ = os.path.splitext(scenic_path)
-        for i, df in enumerate(tables):
-            outfile = root.split('/')[-1]
-            if is_parallel:
-                outfile += '_parallel'
-            if sampler_type:
-                outfile += f'_{sampler_type}'
-            if i == 0:
-                outfile += '_error'
-            else:
-                outfile += '_safe'
-            outfile += '.csv'
-            outpath = os.path.join(output_dir, outfile)
-            announce(f'SAVING OUTPUT TO {outpath}')
-            df.to_csv(outpath)
+        outfile = root.split('/')[-1] + '.csv'
+        outpath = os.path.join(output_dir, outfile)
+        announce(f'SAVING OUTPUT TO {outpath}')
+        falsifier.safe_table.table.to_csv(outpath)
 
 if __name__ == '__main__':
     print('Killing all processes at port', PYLOT_PORT)

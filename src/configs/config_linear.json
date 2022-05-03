@@ -1,6 +1,7 @@
 {
   "scenic_programs": [
-    "/home/carla_challenge/Desktop/kaleab/ScenarioLibrary/src/scenic/01.scenic"
+    "/home/carla_challenge/Desktop/kaleab/ScenarioLibrary/src/scenic/13.scenic",
+    "/home/carla_challenge/Desktop/kaleab/ScenarioLibrary/src/scenic/16.scenic"
   ],
   "timepoint": "50",
   "past_steps": "20",
@@ -8,7 +9,7 @@
   "sampler_type": "mab",
   "parallel_workers": "1",
   "simulations_per_scenario": "5",
-  "output_dir": "../output",
+  "output_dir": "../output/linear",
   "time_per_simulation": "200",
   "input": [
     "trajectory"

@@ -12,7 +12,7 @@
   "sampler_type": "mab",
   "parallel_workers": "1",
   "simulations_per_scenario": "5",
-  "output_dir": "../output",
+  "output_dir": "../output/r2p2",
   "time_per_simulation": "200",
   "input": [
     "trajectory"
