@@ -1,10 +1,13 @@
 import math
 import numpy as np
+import json
 
 from erdos import Timestamp, WatermarkMessage
 
+from pylot.drivers.sensor_setup import LidarSetup
 from pylot.perception.detection.obstacle import Obstacle
-from pylot.perception.messages import ObstacleTrajectoriesMessage
+from pylot.perception.messages import ObstacleTrajectoriesMessage, PointCloudMessage
+from pylot.perception.point_cloud import PointCloud
 from pylot.perception.tracking.obstacle_trajectory import ObstacleTrajectory
 from pylot.utils import Location, Rotation, Transform
 
@@ -43,7 +46,58 @@ def stream_traj(stream, timepoint, past_steps, traj):
         stream.send(msg)
 
     # Send watermark message to indicate completion
-    stream.send(WatermarkMessage(Timestamp(is_top=True)))
+    stream.send(WatermarkMessage(Timestamp()))
+
+def get_lidar_setup(sensor_config_filepath):
+    # Supported `LidarSetup` settings
+    LIDAR_SETTINGS = {'CHANNELS': 'channels',
+                      'LOWER_FOV': 'lower_fov',
+                      'PPS': 'points_per_second',
+                      'RANGE': 'range',
+                      'ROTATION_FREQUENCY': 'rotation_frequency',
+                      'UPPER_FOV': 'upper_fov'}
+
+    # Extract LiDAR configurations
+    sensor_config_file = open(sensor_config_filepath, 'r')
+    sensors = json.load(sensor_config_file)
+    sensor_configs = {'transform': None}
+    for sensor in sensors:
+      if sensor['type'] != 'lidar':
+        continue
+      x, y, z = sensor['transform']
+      sensor_configs['transform'] = Transform(location=Location(x=x, y=y, z=z),
+                                              rotation=Rotation())
+      for setting, val in sensor['settings'].items():
+        if setting not in LIDAR_SETTINGS:
+          continue
+        sensor_configs[LIDAR_SETTINGS[setting]] = val
+    sensor_config_file.close()
+    assert sensor_configs['transform'] is not None, 'Missing LiDAR transform in sensor config file!'
+    lidar_setup = LidarSetup(name='lidar',
+                             lidar_type='sensor.lidar.ray_cast',
+                             legacy=False,  # Using CARLA v.0.9.10.1-74-g8f1b401e
+                             **sensor_configs)
+    return lidar_setup
+
+def stream_pc(stream, timepoint, lidar_filepath, sensor_config_filepath):
+    
+    
+    # Extract LiDAR points as numpy arrays
+    lidar_file = open(lidar_filepath, 'r')
+    lidar_data = json.load(lidar_file)
+    lidar_file.close()
+    points = np.array([[d[0],d[1],d[2]] for d in lidar_data[0]])
+
+    lidar_setup = get_lidar_setup(sensor_config_filepath)
+    
+    # Stream point cloud at timestep one before timepoint
+    timestamp = Timestamp(coordinates=[timepoint-1])
+    pc = PointCloud(points, lidar_setup)
+    msg = PointCloudMessage(timestamp, pc)
+    stream.send(msg)
+
+    # Send watermark message to indicate completion
+    stream.send(WatermarkMessage(Timestamp()))
 
 def store_pred_stream(stream):
     # Dictionary mapping agent IDs to predicted trajectories
